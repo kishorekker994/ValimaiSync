@@ -1,57 +1,30 @@
-import { Outlet, useLocation } from 'react-router-dom';
-import Sidebar from './Sidebar';
+import { Outlet } from 'react-router-dom';
+import BottomNav from './BottomNav';
 import { WorkoutsProvider, useWorkouts } from '../../hooks/useWorkouts';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Bell } from 'lucide-react';
 
-const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
-  '/': { title: 'Dashboard', subtitle: 'Your fitness command center' },
-  '/analytics': { title: 'Analytics', subtitle: 'Deep dive into your performance trends' },
-  '/uploads': { title: 'Upload History', subtitle: 'Manage your workout screenshots' },
-};
-
-function Topbar() {
-  const location = useLocation();
+function TopAppBar() {
   const { refreshData, loading } = useWorkouts();
-  const meta = PAGE_TITLES[location.pathname] ?? { title: 'ValimaiSync', subtitle: '' };
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between px-6 lg:px-8 py-4 bg-[var(--color-bg-base)]/80 backdrop-blur-[12px] border-b border-[rgba(0,0,0,0.06)]">
-      {/* Left: page title */}
-      <div>
-        <h2 className="text-[17px] font-semibold text-[var(--color-text-primary)] leading-tight">
-          {meta.title}
-        </h2>
-        <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">{meta.subtitle}</p>
-      </div>
-
-      {/* Right: actions */}
+    <header className="fixed top-0 w-full z-50 backdrop-blur-xl bg-[var(--color-surface-glass)] shadow-sm flex justify-between items-center px-5 h-16">
       <div className="flex items-center gap-3">
-        {/* Refresh */}
-        <button
-          onClick={() => refreshData()}
+        <img alt="ValimaiSync Logo" className="w-8 h-8 rounded-lg object-contain bg-[var(--color-primary)] p-1" src="/logo.svg" />
+        <h1 className="text-headline-lg-mobile font-extrabold text-[var(--color-primary)]">ValimaiSync</h1>
+      </div>
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={refreshData}
           disabled={loading}
-          title="Refresh data"
-          className="
-            flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)]
-            text-sm font-medium text-[var(--color-text-secondary)]
-            bg-[var(--color-card-bg)] border border-[var(--color-card-border)]
-            shadow-[var(--shadow-card)] hover:border-[var(--color-accent)]/30
-            hover:text-[var(--color-accent)] hover:shadow-[var(--shadow-card-blue)]
-            transition-all duration-150 cursor-pointer disabled:opacity-50
-          "
+          className="w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 duration-200 hover:bg-[var(--color-surface-variant)]/20 cursor-pointer disabled:opacity-50"
         >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          <span className="hidden sm:inline">Refresh</span>
+          <RefreshCw size={22} className={`text-[var(--color-primary)] ${loading ? 'animate-spin' : ''}`} />
         </button>
-
-        {/* App badge */}
-        <div className="
-          flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)]
-          bg-[var(--color-accent)] text-white text-sm font-semibold
-          shadow-[0_4px_12px_rgba(0,122,255,0.3)]
-        ">
-          <span className="w-2 h-2 rounded-full bg-white/70 animate-pulse-dot" />
-          <span>ValimaiSync</span>
+        <button className="w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 duration-200 hover:bg-[var(--color-surface-variant)]/20 cursor-pointer">
+          <Bell size={22} className="text-[var(--color-primary)]" />
+        </button>
+        <div className="w-8 h-8 rounded-full bg-[var(--color-primary-container)] flex items-center justify-center text-white font-bold overflow-hidden">
+          <span className="text-sm">V</span>
         </div>
       </div>
     </header>
@@ -60,16 +33,12 @@ function Topbar() {
 
 function AppLayoutInner() {
   return (
-    <div className="flex min-h-screen bg-[var(--color-bg-base)]">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
-        <Topbar />
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-7">
-            <Outlet />
-          </div>
-        </main>
-      </div>
+    <div className="flex flex-col min-h-screen bg-[var(--color-surface-background)] font-body-lg text-[var(--color-on-surface)]">
+      <TopAppBar />
+      <main className="flex-1 pt-20 pb-24 px-5 max-w-md mx-auto w-full">
+        <Outlet />
+      </main>
+      <BottomNav />
     </div>
   );
 }
