@@ -6,7 +6,9 @@ import {
 } from 'recharts';
 import Card from '../components/ui/Card';
 import Tabs from '../components/ui/Tabs';
-import { getWeeklyData, getMonthlyData, HR_ZONES } from '../data/mockData';
+import { useWorkouts } from '../hooks/useWorkouts';
+import { getWeeklyData, getMonthlyData } from '../utils/dataAggregation';
+import { HR_ZONES } from '../utils/constants';
 
 const periodTabs = [
   { key: 'weekly', label: 'Weekly' },
@@ -15,30 +17,44 @@ const periodTabs = [
   { key: 'yearly', label: 'Yearly' },
 ];
 
-// Custom tooltip style for neumorphic look
+// Custom tooltip style for Light Neumorphic look
 const tooltipStyle = {
-  backgroundColor: '#32324a',
-  border: '1px solid #44446a',
+  backgroundColor: '#f5f8fc',
+  border: '1px solid #d1d8e0',
   borderRadius: '12px',
-  boxShadow: '6px 6px 14px #1e1e2e, -6px -6px 14px #3e3e58',
-  color: '#e8e8f0',
+  boxShadow: '8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff',
+  color: '#1c1c1e',
   fontSize: '13px',
   padding: '12px 16px',
 };
 
-const axisStyle = { fill: '#9d9db8', fontSize: 12 };
+const axisStyle = { fill: '#8e8e93', fontSize: 12 };
 
 export default function Analytics() {
   const [period, setPeriod] = useState('weekly');
+  const { workouts, loading } = useWorkouts();
 
   const data = useMemo(() => {
-    if (period === 'weekly') return getWeeklyData();
-    if (period === 'monthly') return getMonthlyData();
+    if (!workouts || workouts.length === 0) return [];
+    if (period === 'weekly') return getWeeklyData(workouts);
+    if (period === 'monthly') return getMonthlyData(workouts);
     // quarterly = last 3 months, yearly = all
-    const monthly = getMonthlyData();
+    const monthly = getMonthlyData(workouts);
     if (period === 'quarterly') return monthly.slice(-3);
     return monthly;
-  }, [period]);
+  }, [period, workouts]);
+
+  if (loading) {
+    return <div className="p-8 text-center text-[var(--color-text-muted)]">Loading analytics data...</div>;
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="p-8 text-center text-[var(--color-text-muted)]">
+        No data available for analytics yet. Add workouts first.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -64,30 +80,30 @@ export default function Analytics() {
           <AreaChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="gradAvgHR" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#39FF14" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#39FF14" stopOpacity={0} />
+                <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gradPeakHR" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#EF4444" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#EF4444" stopOpacity={0} />
+                <stop offset="0%" stopColor="var(--color-tertiary)" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="var(--color-tertiary)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#44446a30" />
-            <XAxis dataKey="week" tick={axisStyle} axisLine={{ stroke: '#44446a50' }} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-neu-border)" opacity={0.5} />
+            <XAxis dataKey="week" tick={axisStyle} axisLine={{ stroke: 'var(--color-neu-border)' }} tickLine={false} />
             <YAxis tick={axisStyle} axisLine={false} tickLine={false} domain={['dataMin - 10', 'dataMax + 10']} />
             <Tooltip contentStyle={tooltipStyle} />
-            <Legend wrapperStyle={{ color: '#9d9db8', fontSize: 13, paddingTop: 12 }} />
+            <Legend wrapperStyle={{ color: 'var(--color-text-muted)', fontSize: 13, paddingTop: 12 }} />
             <Area
               type="monotone" dataKey="avgHR" name="Avg Heart Rate"
-              stroke="#39FF14" strokeWidth={2.5} fill="url(#gradAvgHR)"
-              dot={{ r: 3, fill: '#39FF14', strokeWidth: 0 }}
-              activeDot={{ r: 5, stroke: '#39FF14', strokeWidth: 2, fill: '#32324a' }}
+              stroke="var(--color-accent)" strokeWidth={2.5} fill="url(#gradAvgHR)"
+              dot={{ r: 3, fill: 'var(--color-accent)', strokeWidth: 0 }}
+              activeDot={{ r: 5, stroke: 'var(--color-accent)', strokeWidth: 2, fill: 'var(--color-neu-surface)' }}
             />
             <Area
               type="monotone" dataKey="peakHR" name="Peak Heart Rate"
-              stroke="#EF4444" strokeWidth={2} fill="url(#gradPeakHR)"
-              dot={{ r: 3, fill: '#EF4444', strokeWidth: 0 }}
-              activeDot={{ r: 5, stroke: '#EF4444', strokeWidth: 2, fill: '#32324a' }}
+              stroke="var(--color-tertiary)" strokeWidth={2} fill="url(#gradPeakHR)"
+              dot={{ r: 3, fill: 'var(--color-tertiary)', strokeWidth: 0 }}
+              activeDot={{ r: 5, stroke: 'var(--color-tertiary)', strokeWidth: 2, fill: 'var(--color-neu-surface)' }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -102,11 +118,11 @@ export default function Analytics() {
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#44446a30" />
-              <XAxis dataKey="week" tick={axisStyle} axisLine={{ stroke: '#44446a50' }} tickLine={false} />
-              <YAxis tick={axisStyle} axisLine={false} tickLine={false} label={{ value: 'Minutes', angle: -90, position: 'insideLeft', fill: '#6b6b8a', fontSize: 11 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-neu-border)" opacity={0.5} />
+              <XAxis dataKey="week" tick={axisStyle} axisLine={{ stroke: 'var(--color-neu-border)' }} tickLine={false} />
+              <YAxis tick={axisStyle} axisLine={false} tickLine={false} label={{ value: 'Minutes', angle: -90, position: 'insideLeft', fill: 'var(--color-text-muted)', fontSize: 11 }} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Legend wrapperStyle={{ color: '#9d9db8', fontSize: 12, paddingTop: 12 }} />
+              <Legend wrapperStyle={{ color: 'var(--color-text-muted)', fontSize: 12, paddingTop: 12 }} />
               {HR_ZONES.map((zone) => (
                 <Bar
                   key={zone.key}
@@ -128,16 +144,16 @@ export default function Analytics() {
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#44446a30" />
-              <XAxis dataKey="week" tick={axisStyle} axisLine={{ stroke: '#44446a50' }} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-neu-border)" opacity={0.5} />
+              <XAxis dataKey="week" tick={axisStyle} axisLine={{ stroke: 'var(--color-neu-border)' }} tickLine={false} />
               <YAxis yAxisId="left" tick={axisStyle} axisLine={false} tickLine={false}
-                label={{ value: 'Calories', angle: -90, position: 'insideLeft', fill: '#6b6b8a', fontSize: 11 }} />
+                label={{ value: 'Calories', angle: -90, position: 'insideLeft', fill: 'var(--color-text-muted)', fontSize: 11 }} />
               <YAxis yAxisId="right" orientation="right" tick={axisStyle} axisLine={false} tickLine={false}
-                label={{ value: 'Minutes', angle: 90, position: 'insideRight', fill: '#6b6b8a', fontSize: 11 }} />
+                label={{ value: 'Minutes', angle: 90, position: 'insideRight', fill: 'var(--color-text-muted)', fontSize: 11 }} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Legend wrapperStyle={{ color: '#9d9db8', fontSize: 12, paddingTop: 12 }} />
-              <Bar yAxisId="left" dataKey="calories" name="Calories" fill="#39FF14" radius={[4, 4, 0, 0]} barSize={20} fillOpacity={0.85} />
-              <Bar yAxisId="right" dataKey="durationMinutes" name="Duration (min)" fill="#CCFF00" radius={[4, 4, 0, 0]} barSize={20} fillOpacity={0.65} />
+              <Legend wrapperStyle={{ color: 'var(--color-text-muted)', fontSize: 12, paddingTop: 12 }} />
+              <Bar yAxisId="left" dataKey="calories" name="Calories" fill="var(--color-accent)" radius={[4, 4, 0, 0]} barSize={20} fillOpacity={0.85} />
+              <Bar yAxisId="right" dataKey="durationMinutes" name="Duration (min)" fill="var(--color-secondary)" radius={[4, 4, 0, 0]} barSize={20} fillOpacity={0.65} />
             </BarChart>
           </ResponsiveContainer>
         </Card>

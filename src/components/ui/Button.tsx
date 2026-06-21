@@ -18,7 +18,7 @@ export default function Button({ variant = 'primary', size = 'md', icon, childre
 
   const variants = {
     primary: `
-      bg-[var(--color-accent)] text-[var(--color-neu-inset)] font-semibold
+      bg-[var(--color-accent)] text-white font-semibold
       shadow-[var(--shadow-neu-button)]
       hover:shadow-[var(--shadow-glow-accent)] hover:brightness-110
       active:shadow-[var(--shadow-neu-button-active)] active:scale-[0.97]

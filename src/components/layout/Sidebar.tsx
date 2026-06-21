@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BarChart3, Upload, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Upload, Activity, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useWorkouts } from '../../hooks/useWorkouts';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -10,20 +11,28 @@ const navItems = [
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const { clearAllData } = useWorkouts();
+
+  const handleClearData = async () => {
+    if (confirm("WARNING: This will permanently delete ALL workouts, screenshots, and HR zones from the database. Are you absolutely sure?")) {
+      await clearAllData();
+      alert("All data has been cleared.");
+    }
+  };
 
   return (
     <aside
       className={`
         flex flex-col h-screen sticky top-0
         bg-[var(--color-neu-surface)] shadow-[var(--shadow-neu-raised)]
-        transition-all duration-300 ease-in-out z-50
+        transition-all duration-300 ease-in-out z-50 border-r border-[var(--color-neu-border)]
         ${collapsed ? 'w-[72px]' : 'w-[240px]'}
       `}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 p-5 border-b border-[var(--color-neu-border)]/30">
+      <div className="flex items-center gap-3 p-5 border-b border-[var(--color-neu-border)]/50">
         <div className="flex-shrink-0 w-9 h-9 rounded-[var(--radius-sm)] bg-[var(--color-accent)] flex items-center justify-center shadow-[var(--shadow-glow-accent)]">
-          <Activity size={20} className="text-[var(--color-neu-inset)]" />
+          <Activity size={20} className="text-white" />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
@@ -38,7 +47,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-1.5">
+      <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
@@ -48,8 +57,8 @@ export default function Sidebar() {
               flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)]
               transition-all duration-200 group relative
               ${isActive
-                ? 'bg-[var(--color-accent-glow)] text-[var(--color-accent)] shadow-[var(--shadow-neu-button)]'
-                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-neu-raised)]/50'
+                ? 'bg-[var(--color-neu-inset)] text-[var(--color-accent)] shadow-[var(--shadow-neu-inset)]'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-neu-raised)]'
               }
             `}
           >
@@ -68,8 +77,23 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Collapse Toggle */}
-      <div className="p-3 border-t border-[var(--color-neu-border)]/30">
+      {/* Footer Actions */}
+      <div className="p-3 border-t border-[var(--color-neu-border)]/50 space-y-2">
+        <button
+          onClick={handleClearData}
+          title="Clear All Data"
+          className="
+            w-full flex items-center justify-center gap-2 px-3 py-2
+            rounded-[var(--radius-sm)] text-[var(--color-error)]
+            bg-[var(--color-neu-surface)] hover:bg-[var(--color-error)] hover:text-white
+            shadow-[var(--shadow-neu-button)] hover:shadow-none
+            transition-all duration-200 cursor-pointer border-none text-sm font-medium
+          "
+        >
+          <Trash2 size={16} />
+          {!collapsed && <span>Clear All Data</span>}
+        </button>
+
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="

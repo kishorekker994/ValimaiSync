@@ -1,47 +1,47 @@
 @import "tailwindcss";
 
-/* ── ValimaiSync Design Tokens ── */
+/* ── ValimaiSync Design Tokens (Soft Light Neumorphism) ── */
 @theme {
-  /* Neumorphic Background Palette (soft dark, NOT pitch black) */
-  --color-neu-base: #2a2a3d;
-  --color-neu-surface: #32324a;
-  --color-neu-raised: #3a3a55;
-  --color-neu-inset: #222236;
-  --color-neu-border: #44446a;
+  /* Neumorphic Background Palette (Light/Off-white) */
+  --color-neu-base: #eef2f6;
+  --color-neu-surface: #f0f3f8;
+  --color-neu-raised: #f5f8fc;
+  --color-neu-inset: #e5e9f0;
+  --color-neu-border: #d1d8e0;
 
   /* Accent Palette */
-  --color-accent: #39FF14;
-  --color-accent-dim: #2dd911;
-  --color-accent-glow: rgba(57, 255, 20, 0.15);
-  --color-secondary: #CCFF00;
-  --color-tertiary: #00E5FF;
-  --color-tertiary-dim: #00b8cc;
+  --color-accent: #007AFF;
+  --color-accent-dim: #005bb5;
+  --color-accent-glow: rgba(0, 122, 255, 0.15);
+  --color-secondary: #FF9500;
+  --color-tertiary: #FF2D55;
+  --color-tertiary-dim: #d11d3f;
 
-  /* Text */
-  --color-text-primary: #e8e8f0;
-  --color-text-secondary: #9d9db8;
-  --color-text-muted: #6b6b8a;
+  /* Text (Dark for light mode) */
+  --color-text-primary: #1c1c1e;
+  --color-text-secondary: #3a3a3c;
+  --color-text-muted: #8e8e93;
 
   /* Heart Rate Zone Colors */
-  --color-zone-normal: #6B7280;
-  --color-zone-warmup: #3B82F6;
-  --color-zone-fatburn: #22C55E;
-  --color-zone-aerobic: #EAB308;
-  --color-zone-anaerobic: #F97316;
-  --color-zone-extreme: #EF4444;
+  --color-zone-normal: #8E8E93;
+  --color-zone-warmup: #5AC8FA;
+  --color-zone-fatburn: #34C759;
+  --color-zone-aerobic: #FFCC00;
+  --color-zone-anaerobic: #FF9500;
+  --color-zone-extreme: #FF3B30;
 
   /* Status */
-  --color-success: #22C55E;
-  --color-warning: #EAB308;
-  --color-error: #EF4444;
-  --color-info: #3B82F6;
+  --color-success: #34C759;
+  --color-warning: #FFCC00;
+  --color-error: #FF3B30;
+  --color-info: #007AFF;
 
-  /* Neumorphic Shadows */
-  --shadow-neu-raised: 6px 6px 14px #1e1e2e, -6px -6px 14px #3e3e58;
-  --shadow-neu-inset: inset 4px 4px 10px #1e1e2e, inset -4px -4px 10px #3e3e58;
-  --shadow-neu-button: 4px 4px 10px #1e1e2e, -4px -4px 10px #3e3e58;
-  --shadow-neu-button-active: inset 3px 3px 6px #1e1e2e, inset -3px -3px 6px #3e3e58;
-  --shadow-glow-accent: 0 0 20px rgba(57, 255, 20, 0.25), 0 0 60px rgba(57, 255, 20, 0.08);
+  /* Neumorphic Shadows (Dual shadows for soft 3D effect) */
+  --shadow-neu-raised: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+  --shadow-neu-inset: inset 6px 6px 12px #d1d9e6, inset -6px -6px 12px #ffffff;
+  --shadow-neu-button: 6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff;
+  --shadow-neu-button-active: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
+  --shadow-glow-accent: 0 0 20px rgba(0, 122, 255, 0.25), 0 0 40px rgba(0, 122, 255, 0.1);
 
   /* Fonts */
   --font-heading: 'Inter', system-ui, sans-serif;
@@ -132,8 +132,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(57, 255, 20, 0.2); }
-  50% { box-shadow: 0 0 24px rgba(57, 255, 20, 0.4); }
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 122, 255, 0.2); }
+  50% { box-shadow: 0 0 24px rgba(0, 122, 255, 0.4); }
 }
 
 @keyframes shimmer {

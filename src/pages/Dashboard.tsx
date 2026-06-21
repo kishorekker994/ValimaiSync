@@ -1,6 +1,7 @@
-import { Flame, Heart, Timer, Zap, TrendingUp, Calendar } from 'lucide-react';
+import { Flame, Heart, Timer, Zap, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
 import Card from '../components/ui/Card';
-import { todayWorkout, mockWorkouts, HR_ZONES } from '../data/mockData';
+import { useWorkouts } from '../hooks/useWorkouts';
+import { HR_ZONES } from '../utils/constants';
 import { formatDuration, formatCalories, formatHeartRate, formatDate } from '../utils/formatters';
 
 function MetricCard({ icon: Icon, label, value, unit, color, trend }: {
@@ -37,8 +38,8 @@ function MetricCard({ icon: Icon, label, value, unit, color, trend }: {
   );
 }
 
-function HRZoneBar({ zones }: { zones: typeof todayWorkout.hrZones }) {
-  const totalMinutes = zones.reduce((s, z) => s + z.minutes, 0);
+function HRZoneBar({ zones }: { zones: any[] }) {
+  if (!zones || zones.length === 0) return null;
   return (
     <Card variant="raised">
       <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 font-[var(--font-heading)]">
@@ -74,15 +75,18 @@ function HRZoneBar({ zones }: { zones: typeof todayWorkout.hrZones }) {
   );
 }
 
-function RecentWorkouts() {
-  const recent = mockWorkouts.slice(-7).reverse();
+function RecentWorkouts({ workouts }: { workouts: any[] }) {
+  const recent = workouts.slice(-7).reverse();
+  
+  if (recent.length === 0) return null;
+
   return (
     <Card variant="raised">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-[var(--color-text-primary)] font-[var(--font-heading)]">
           Recent Workouts
         </h3>
-        <span className="text-xs text-[var(--color-text-muted)]">Last 7 sessions</span>
+        <span className="text-xs text-[var(--color-text-muted)]">Last {recent.length} sessions</span>
       </div>
       <div className="space-y-2.5">
         {recent.map((w) => (
@@ -121,7 +125,31 @@ function RecentWorkouts() {
 }
 
 export default function Dashboard() {
-  const w = todayWorkout;
+  const { workouts, loading, error } = useWorkouts();
+
+  if (loading) {
+    return <div className="p-8 text-center text-[var(--color-text-muted)]">Loading dashboard data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-[var(--color-error)] flex flex-col items-center gap-2">
+        <AlertCircle size={32} />
+        <p>Failed to load data from Database: {error}</p>
+      </div>
+    );
+  }
+
+  const w = workouts[workouts.length - 1];
+
+  if (!w) {
+    return (
+      <div className="p-8 text-center">
+        <h2 className="text-xl font-bold text-[var(--color-text-primary)]">No Workouts Found</h2>
+        <p className="text-[var(--color-text-muted)] mt-2">Go to Upload History to add your first workout screenshot.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -129,10 +157,10 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center gap-2 text-[var(--color-text-muted)] text-sm mb-1">
           <Calendar size={14} />
-          <span>{formatDate(new Date())}</span>
+          <span>{formatDate(new Date(w.date))}</span>
         </div>
         <h1 className="text-2xl font-bold text-[var(--color-text-primary)] font-[var(--font-heading)]">
-          Today's Overview
+          Latest Overview
         </h1>
         <p className="text-[var(--color-text-secondary)] text-sm mt-1">
           Latest workout: <span className="text-[var(--color-accent)] font-medium">{w.type}</span>
@@ -141,16 +169,16 @@ export default function Dashboard() {
 
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger-children">
-        <MetricCard icon={Flame} label="Calories Burned" value={w.calories} unit="kcal" color="#EF4444" trend="+12%" />
-        <MetricCard icon={Heart} label="Avg Heart Rate" value={w.avgHR} unit="bpm" color="#F97316" trend="+3%" />
-        <MetricCard icon={Timer} label="Duration" value={formatDuration(w.durationSeconds)} unit="" color="#3B82F6" />
-        <MetricCard icon={Zap} label="METs" value={w.mets} unit="MET" color="#22C55E" />
+        <MetricCard icon={Flame} label="Calories Burned" value={w.calories} unit="kcal" color="var(--color-error)" trend="+12%" />
+        <MetricCard icon={Heart} label="Avg Heart Rate" value={w.avgHR} unit="bpm" color="var(--color-secondary)" trend="+3%" />
+        <MetricCard icon={Timer} label="Duration" value={formatDuration(w.durationSeconds)} unit="" color="var(--color-accent)" />
+        <MetricCard icon={Zap} label="METs" value={w.mets} unit="MET" color="var(--color-success)" />
       </div>
 
       {/* HR Zones + Recent */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <HRZoneBar zones={w.hrZones} />
-        <RecentWorkouts />
+        <RecentWorkouts workouts={workouts} />
       </div>
     </div>
   );
