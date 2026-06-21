@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" fill="none">
+  <!-- Icon mark (lightning bolt + heartbeat) -->
+  <!-- Lightning bolt -->
+  <polygon points="10,4 20,4 14,24 22,24 8,52 12,32 4,32" fill="#007AFF" />
+  <!-- Heartbeat ECG wave -->
+  <polyline points="17,36 22,36 25,28 28,44 31,20 35,44 38,34 46,34" stroke="#007AFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Brand wordmark -->
+  <text x="54" y="32" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="700" fill="#1c1c1e" letter-spacing="-0.5">ValimaiSync</text>
+  <text x="55" y="47" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="400" fill="#8e8e93" letter-spacing="1.5">FITNESS TRACKER</text>
+</svg>

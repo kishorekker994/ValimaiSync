@@ -17,18 +17,18 @@ const periodTabs = [
   { key: 'yearly', label: 'Yearly' },
 ];
 
-// Custom tooltip style for Light Neumorphic look
+// Custom tooltip style for clean modern look
 const tooltipStyle = {
-  backgroundColor: '#f5f8fc',
-  border: '1px solid #d1d8e0',
+  backgroundColor: '#ffffff',
+  border: '1px solid rgba(0,0,0,0.08)',
   borderRadius: '12px',
-  boxShadow: '8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff',
-  color: '#1c1c1e',
+  boxShadow: '0 8px 24px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)',
+  color: '#0f172a',
   fontSize: '13px',
   padding: '12px 16px',
 };
 
-const axisStyle = { fill: '#8e8e93', fontSize: 12 };
+const axisStyle = { fill: '#94a3b8', fontSize: 12 };
 
 export default function Analytics() {
   const [period, setPeriod] = useState('weekly');
@@ -45,13 +45,26 @@ export default function Analytics() {
   }, [period, workouts]);
 
   if (loading) {
-    return <div className="p-8 text-center text-[var(--color-text-muted)]">Loading analytics data...</div>;
+    return (
+      <div className="space-y-6 animate-fade-in-up">
+        <div className="h-10 w-64 skeleton" />
+        <div className="h-72 skeleton" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="h-72 skeleton" />
+          <div className="h-72 skeleton" />
+        </div>
+      </div>
+    );
   }
 
   if (data.length === 0) {
     return (
-      <div className="p-8 text-center text-[var(--color-text-muted)]">
-        No data available for analytics yet. Add workouts first.
+      <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
+        <div className="w-14 h-14 rounded-2xl bg-[var(--color-accent-light)] flex items-center justify-center mb-4">
+          <span className="text-[var(--color-accent)] text-2xl">📊</span>
+        </div>
+        <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">No Analytics Data Yet</h3>
+        <p className="text-sm text-[var(--color-text-muted)] max-w-xs">Add workouts first to see your performance trends here.</p>
       </div>
     );
   }

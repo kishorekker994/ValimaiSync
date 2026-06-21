@@ -1,64 +1,97 @@
 @import "tailwindcss";
 
-/* ── ValimaiSync Design Tokens (Soft Light Neumorphism) ── */
+/* ── ValimaiSync Design Tokens — Modern Clean Dashboard ── */
 @theme {
-  /* Neumorphic Background Palette (Light/Off-white) */
-  --color-neu-base: #eef2f6;
-  --color-neu-surface: #f0f3f8;
-  --color-neu-raised: #f5f8fc;
-  --color-neu-inset: #e5e9f0;
-  --color-neu-border: #d1d8e0;
+  /* Base Background */
+  --color-bg-base: #f0f4f8;
+  --color-bg-surface: #ffffff;
+  --color-bg-subtle: #f8fafc;
+  --color-bg-muted: #eef2f7;
 
-  /* Accent Palette */
+  /* Card System */
+  --color-card-bg: #ffffff;
+  --color-card-border: rgba(0, 0, 0, 0.07);
+  --color-card-border-hover: rgba(0, 122, 255, 0.25);
+
+  /* Blue Brand Palette */
   --color-accent: #007AFF;
-  --color-accent-dim: #005bb5;
+  --color-accent-hover: #0062cc;
+  --color-accent-light: #e8f2ff;
   --color-accent-glow: rgba(0, 122, 255, 0.15);
-  --color-secondary: #FF9500;
-  --color-tertiary: #FF2D55;
-  --color-tertiary-dim: #d11d3f;
 
-  /* Text (Dark for light mode) */
-  --color-text-primary: #1c1c1e;
-  --color-text-secondary: #3a3a3c;
-  --color-text-muted: #8e8e93;
+  /* Secondary Palette */
+  --color-secondary: #FF9500;
+  --color-secondary-light: #fff4e6;
+  --color-tertiary: #FF2D55;
+  --color-tertiary-light: #fff0f3;
+  --color-success: #34C759;
+  --color-success-light: #edfbf1;
+  --color-warning: #FFCC00;
+  --color-warning-light: #fffce6;
+  --color-error: #FF3B30;
+  --color-error-light: #fff2f1;
+  --color-info: #5AC8FA;
+  --color-info-light: #edf9ff;
+
+  /* Sidebar */
+  --color-sidebar-bg: #ffffff;
+  --color-sidebar-border: #e8ecf0;
+  --color-sidebar-active-bg: #e8f2ff;
+  --color-sidebar-active-text: #007AFF;
+  --color-sidebar-hover-bg: #f5f7fa;
+
+  /* Text Hierarchy */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
 
   /* Heart Rate Zone Colors */
-  --color-zone-normal: #8E8E93;
+  --color-zone-normal: #94a3b8;
   --color-zone-warmup: #5AC8FA;
   --color-zone-fatburn: #34C759;
   --color-zone-aerobic: #FFCC00;
   --color-zone-anaerobic: #FF9500;
   --color-zone-extreme: #FF3B30;
 
-  /* Status */
-  --color-success: #34C759;
-  --color-warning: #FFCC00;
-  --color-error: #FF3B30;
-  --color-info: #007AFF;
-
-  /* Neumorphic Shadows (Dual shadows for soft 3D effect) */
-  --shadow-neu-raised: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
-  --shadow-neu-inset: inset 6px 6px 12px #d1d9e6, inset -6px -6px 12px #ffffff;
-  --shadow-neu-button: 6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff;
-  --shadow-neu-button-active: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
-  --shadow-glow-accent: 0 0 20px rgba(0, 122, 255, 0.25), 0 0 40px rgba(0, 122, 255, 0.1);
+  /* Card Shadows */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-card-blue: 0 4px 20px rgba(0, 122, 255, 0.15), 0 1px 4px rgba(0, 122, 255, 0.08);
+  --shadow-sidebar: 1px 0 0 #e8ecf0;
+  --shadow-topbar: 0 1px 0 #e8ecf0;
+  --shadow-dropdown: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
 
   /* Fonts */
   --font-heading: 'Inter', system-ui, sans-serif;
-  --font-body: 'Geist', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 
   /* Radii */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
 
   /* Spacing */
   --spacing-card: 24px;
+  --spacing-section: 28px;
+
+  /* Legacy aliases (for neumorphic utility classes still used) */
+  --color-neu-base: #f0f4f8;
+  --color-neu-surface: #ffffff;
+  --color-neu-raised: #f8fafc;
+  --color-neu-inset: #eef2f7;
+  --color-neu-border: #e2e8f0;
+  --shadow-neu-raised: var(--shadow-card);
+  --shadow-neu-inset: inset 0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.04);
+  --shadow-neu-button: var(--shadow-card);
+  --shadow-neu-button-active: inset 0 2px 4px rgba(0,0,0,0.08);
+  --shadow-glow-accent: var(--shadow-card-blue);
 }
 
 /* ── Global Styles ── */
-* {
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -66,74 +99,141 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-body);
-  background-color: var(--color-neu-base);
+  background-color: var(--color-bg-base);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  line-height: 1.5;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+  line-height: 1.2;
 }
 
-/* ── Scrollbar ── */
+/* ── Custom Scrollbar ── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-neu-inset);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-neu-border);
+  background: #cbd5e1;
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
+  background: #94a3b8;
 }
 
-/* ── Neumorphic Utility Classes ── */
-.neu-raised {
-  background: var(--color-neu-surface);
-  box-shadow: var(--shadow-neu-raised);
+/* ── Card Styles ── */
+.card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--spacing-card);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-card-border-hover);
+}
+
+.card-hero {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e8f2ff 50%, #f5f0ff 100%);
+  border: 1px solid rgba(0, 122, 255, 0.12);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 36px;
+}
+
+/* ── Legacy Neumorphic Utilities ── */
+.neu-raised {
+  background: var(--color-card-bg);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-card-border);
 }
 
 .neu-inset {
-  background: var(--color-neu-inset);
-  box-shadow: var(--shadow-neu-inset);
+  background: var(--color-bg-muted);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
   border-radius: var(--radius-md);
+  border: 1px solid rgba(0,0,0,0.05);
 }
 
 .neu-button {
-  background: var(--color-neu-surface);
-  box-shadow: var(--shadow-neu-button);
+  background: var(--color-card-bg);
+  box-shadow: var(--shadow-card);
   border-radius: var(--radius-md);
-  border: none;
+  border: 1px solid var(--color-card-border);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 .neu-button:hover {
-  box-shadow: var(--shadow-glow-accent);
+  box-shadow: var(--shadow-card-blue);
+  border-color: var(--color-accent);
 }
 .neu-button:active {
-  box-shadow: var(--shadow-neu-button-active);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+}
+
+/* ── Badge / Tag ── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.tag-blue { background: var(--color-accent-light); color: var(--color-accent); border-color: rgba(0,122,255,0.2); }
+.tag-orange { background: var(--color-secondary-light); color: var(--color-secondary); border-color: rgba(255,149,0,0.2); }
+.tag-green { background: var(--color-success-light); color: var(--color-success); border-color: rgba(52,199,89,0.2); }
+.tag-red { background: var(--color-error-light); color: var(--color-error); border-color: rgba(255,59,48,0.2); }
+.tag-muted { background: var(--color-bg-muted); color: var(--color-text-muted); border-color: rgba(0,0,0,0.06); }
+
+/* ── Stat Bar ── */
+.stat-bar {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--color-bg-muted);
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--color-accent);
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ── Animation Keyframes ── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(0, 122, 255, 0.2); }
-  50% { box-shadow: 0 0 24px rgba(0, 122, 255, 0.4); }
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
 }
 
 @keyframes shimmer {
@@ -141,21 +241,38 @@ h1, h2, h3, h4, h5, h6 {
   100% { background-position: 200% 0; }
 }
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s ease both;
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+.animate-fade-in-up {
+  animation: fadeInUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-in-right {
+  animation: fadeInRight 0.35s ease both;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
 }
 
 /* Stagger children animation */
 .stagger-children > * {
-  animation: fadeInUp 0.4s ease both;
+  animation: fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(1) { animation-delay: 0.04s; }
 .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
-.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
-.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
-.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
-.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.16s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.22s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.28s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.34s; }
+
+/* Skeleton loading shimmer */
+.skeleton {
+  background: linear-gradient(90deg, #f0f4f8 25%, #e4eaf2 50%, #f0f4f8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
