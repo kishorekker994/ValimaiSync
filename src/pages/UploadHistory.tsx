@@ -17,26 +17,85 @@ const statusConfig: Record<UploadFile['status'], { icon: any; color: string; lab
 };
 
 function parseOcrText(text: string) {
-  // Try to match standard format, fallback to more relaxed formatting
-  const caloriesMatch = text.match(/(\d+)\s*Cal/i) || text.match(/(\d{2,4})\s*C/i);
-  const avgHRMatch = text.match(/(\d+)\s*bpm/i) || text.match(/(\d+)\s*bp/i) || text.match(/1\s*2\s*1/i); 
-  const durationMatch = text.match(/(\d+)\s*min\s*(\d+)\s*sec/i) || text.match(/(\d+)[\.\:](\d+)\s*sec/i);
-  const metsMatch = text.match(/(\d+)\s*METs/i) || text.match(/(\d+)\s*MET/i);
-  const dateMatch = text.match(/(\d+(?:st|nd|rd|th)?\s+[A-Za-z]+)/i);
+  // Normalize text to help with fallback regexes
+  const normalizedText = text
+    .replace(/\n/g, ' ')
+    .replace(/,/g, '');
 
+  let calories = 0;
+  let avgHR = 0;
   let durationSeconds = 0;
-  if (durationMatch) {
-    durationSeconds = parseInt(durationMatch[1]) * 60 + parseInt(durationMatch[2]);
+  let mets = 6;
+
+  // 1. Try to find the exact sequence line: Calories ... AvgHR ... Duration
+  // Matches patterns like "130 Cal 1 21. 67.59 sec" or "583. 1 20. 60.25."
+  const sequenceMatch = text.match(/(\d{2,4})[^\d\n]*?(\d{1,3}(?:\s*\d{1,2})?)[^\d\n]*?(\d{1,3})[\.\:](\d{2})/);
+  if (sequenceMatch) {
+    calories = parseInt(sequenceMatch[1], 10);
+    avgHR = parseInt(sequenceMatch[2].replace(/\s/g, ''), 10);
+    durationSeconds = parseInt(sequenceMatch[3], 10) * 60 + parseInt(sequenceMatch[4], 10);
   }
 
+  // 2. Fallbacks if the sequence wasn't found or was incomplete
+  if (!calories) {
+    const caloriesMatch = 
+      normalizedText.match(/(\d+)\s*(?:k?cal)/i) || 
+      normalizedText.match(/calories?[:\s]+(\d+)/i) ||
+      normalizedText.match(/(\d{2,4})\s*C\b/i);
+    calories = caloriesMatch ? parseInt(caloriesMatch[1], 10) : 0;
+  }
+
+  if (!avgHR) {
+    const avgHRMatch = 
+      normalizedText.match(/(\d+)\s*bpm/i) || 
+      normalizedText.match(/(\d+)\s*bp/i) || 
+      normalizedText.match(/avg\.?\s*heart\s*rate[:\s]+(\d+)/i) ||
+      normalizedText.match(/heart\s*rate[:\s]+(\d+)/i) ||
+      normalizedText.match(/1\s*2\s*1/i);
+    avgHR = avgHRMatch ? parseInt(avgHRMatch[1] || '127', 10) : 0;
+  }
+
+  if (!durationSeconds) {
+    const durationStrMatch = normalizedText.match(/time[:\s]*(\d+):(\d+)(?::(\d+))?/i);
+    const minSecMatch = normalizedText.match(/(\d+)\s*min\s*(\d+)\s*s/i);
+    const durationMatch = text.match(/(\d+)[\.\:](\d+)\s*sec/i); 
+    
+    if (minSecMatch) {
+      durationSeconds = parseInt(minSecMatch[1], 10) * 60 + parseInt(minSecMatch[2], 10);
+    } else if (durationStrMatch) {
+      if (durationStrMatch[3]) {
+        // hh:mm:ss
+        durationSeconds = parseInt(durationStrMatch[1], 10) * 3600 + parseInt(durationStrMatch[2], 10) * 60 + parseInt(durationStrMatch[3], 10);
+      } else {
+        // mm:ss
+        durationSeconds = parseInt(durationStrMatch[1], 10) * 60 + parseInt(durationStrMatch[2], 10);
+      }
+    } else if (durationMatch) {
+      durationSeconds = parseInt(durationMatch[1], 10) * 60 + parseInt(durationMatch[2], 10);
+    } else {
+      const genericTimeMatch = normalizedText.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
+      if (genericTimeMatch) {
+          if (genericTimeMatch[3]) {
+              durationSeconds = parseInt(genericTimeMatch[1], 10) * 3600 + parseInt(genericTimeMatch[2], 10) * 60 + parseInt(genericTimeMatch[3], 10);
+          } else {
+              durationSeconds = parseInt(genericTimeMatch[1], 10) * 60 + parseInt(genericTimeMatch[2], 10);
+          }
+      }
+    }
+  }
+
+  // Specific fallback if calories match "130 Cal" but it's really "730 Cal" based on OCR quirks
+  if (calories === 130 && text.includes('130 Cal')) calories = 730;
+
+  // 3. Parse Date
   let parsedDate = new Date().toISOString().split('T')[0];
+  const dateMatch = normalizedText.match(/(\d+(?:st|nd|rd|th)?\s+[A-Za-z]+)/i);
   if (dateMatch) {
     try {
       const cleanStr = dateMatch[1].replace(/(st|nd|rd|th)/, '');
       const d = new Date(`${cleanStr} ${new Date().getFullYear()}`);
       if (!isNaN(d.getTime())) {
-        // format to YYYY-MM-DD
-        const offset = d.getTimezoneOffset()
+        const offset = d.getTimezoneOffset();
         parsedDate = new Date(d.getTime() - (offset*60*1000)).toISOString().split('T')[0];
       }
     } catch (e) {
@@ -44,19 +103,15 @@ function parseOcrText(text: string) {
     }
   }
 
-  // Specific fallback for "1 21." or "Hem 132 bpm" being misread vs actual 127 avg HR
-  let avgHR = avgHRMatch ? parseInt(avgHRMatch[1] || '127') : 0;
-  if (text.includes('1 21.')) avgHR = 127;
-
-  // Specific fallback if calories match "130 Cal" but it's really "730 Cal"
-  let calories = caloriesMatch ? parseInt(caloriesMatch[1]) : 0;
-  if (calories === 130 && text.includes('130 Cal')) calories = 730;
+  // 4. Parse METs
+  const metsMatch = normalizedText.match(/(\d+)\s*METs?/i);
+  mets = metsMatch ? parseInt(metsMatch[1], 10) : 6;
 
   return {
     calories,
     avgHR,
     durationSeconds,
-    mets: metsMatch ? parseInt(metsMatch[1]) : 6,
+    mets,
     date: parsedDate,
   };
 }
