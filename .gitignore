@@ -11,6 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+*.eslintcache
+.stylelintcache
+.prettiercache
+
+# Uploads
+*.jpg
+*.jpeg
+*.png
 
 # Editor directories and files
 .vscode/*
