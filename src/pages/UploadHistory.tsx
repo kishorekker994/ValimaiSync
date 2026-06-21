@@ -6,45 +6,96 @@ import Dropzone from '../components/ui/Dropzone';
 import { useWorkouts } from '../hooks/useWorkouts';
 import { UploadFile } from '../types';
 import { formatDuration } from '../utils/formatters';
+import Tesseract from 'tesseract.js';
 
 const statusConfig: Record<UploadFile['status'], { icon: any; color: string; label: string }> = {
-  queued: { icon: Clock, color: 'var(--color-text-muted)', label: 'Queued' },
-  processing: { icon: Loader2, color: 'var(--color-accent)', label: 'Processing' },
-  verified: { icon: CheckCircle2, color: 'var(--color-warning)', label: 'Verified' },
-  committed: { icon: CheckCircle2, color: 'var(--color-success)', label: 'Committed' },
-  error: { icon: AlertCircle, color: 'var(--color-error)', label: 'Error' },
+  queued: { icon: Clock, color: 'var(--color-on-surface-variant)', label: 'Queued' },
+  processing: { icon: Loader2, color: 'var(--color-primary)', label: 'Processing' },
+  verified: { icon: CheckCircle2, color: '#F0A030', label: 'Verified' },
+  committed: { icon: CheckCircle2, color: 'var(--color-success-emerald)', label: 'Committed' },
+  error: { icon: AlertCircle, color: '#FF3B30', label: 'Error' },
 };
 
-function VerificationModal({ file, onClose, onSave }: {
+function parseOcrText(text: string) {
+  const caloriesMatch = text.match(/(\d+)\s*Cal/i);
+  const avgHRMatch = text.match(/(\d+)\s*bpm/i);
+  const durationMatch = text.match(/(\d+)\s*min\s*(\d+)\s*sec/i);
+  const metsMatch = text.match(/(\d+)\s*METs/i);
+  const dateMatch = text.match(/(\d+(?:st|nd|rd|th)?\s+[A-Za-z]+)/i);
+
+  let durationSeconds = 0;
+  if (durationMatch) {
+    durationSeconds = parseInt(durationMatch[1]) * 60 + parseInt(durationMatch[2]);
+  }
+
+  let parsedDate = new Date().toISOString().split('T')[0];
+  if (dateMatch) {
+    try {
+      const cleanStr = dateMatch[1].replace(/(st|nd|rd|th)/, '');
+      const d = new Date(`${cleanStr} ${new Date().getFullYear()}`);
+      if (!isNaN(d.getTime())) {
+        // format to YYYY-MM-DD
+        const offset = d.getTimezoneOffset()
+        parsedDate = new Date(d.getTime() - (offset*60*1000)).toISOString().split('T')[0];
+      }
+    } catch (e) {
+      console.error("Date parsing failed", e);
+    }
+  }
+
+  return {
+    calories: caloriesMatch ? parseInt(caloriesMatch[1]) : 0,
+    avgHR: avgHRMatch ? parseInt(avgHRMatch[1]) : 0,
+    durationSeconds,
+    mets: metsMatch ? parseInt(metsMatch[1]) : 0,
+    date: parsedDate,
+  };
+}
+
+function VerificationModal({ file, parsedDataOverride, onClose, onSave }: {
   file: UploadFile;
+  parsedDataOverride: any;
   onClose: () => void;
   onSave: (data: any) => void;
 }) {
+  const initialData = parsedDataOverride || file.parsedData || {};
   const [formData, setFormData] = useState({
-    calories: file.parsedData?.calories || Math.floor(Math.random() * 500 + 300),
-    avgHR: file.parsedData?.avgHR || Math.floor(Math.random() * 40 + 110),
-    durationSeconds: file.parsedData?.durationSeconds || Math.floor(Math.random() * 2000 + 1500),
-    mets: file.parsedData?.mets || 6.5,
+    date: initialData.date || new Date().toISOString().split('T')[0],
+    calories: initialData.calories || 0,
+    avgHR: initialData.avgHR || 0,
+    durationSeconds: initialData.durationSeconds || 0,
+    mets: initialData.mets || 0,
   });
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in-up">
-      <div className="bg-[var(--color-neu-surface)] shadow-[var(--shadow-neu-raised)] rounded-[var(--radius-xl)] w-full max-w-md p-6 border border-[var(--color-neu-border)]">
+      <div className="bg-[var(--color-surface)] shadow-lg rounded-2xl w-full max-w-md p-6 border border-[var(--color-outline-variant)]">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-[var(--color-text-primary)] font-[var(--font-heading)]">
+          <h3 className="text-title-md text-[var(--color-on-surface)]">
             Verify Parsed Data
           </h3>
-          <button onClick={onClose} className="p-1.5 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-neu-raised)] transition-colors cursor-pointer border-none bg-transparent">
+          <button onClick={onClose} className="p-1.5 rounded-md text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-dim)] transition-colors cursor-pointer border-none bg-transparent">
             <X size={18} />
           </button>
         </div>
 
-        <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+        <p className="text-body-sm text-[var(--color-on-surface-variant)] mb-4">
           <FileImage size={14} className="inline mr-1.5" />
           {file.name}
         </p>
 
         <div className="space-y-4">
+          <div>
+            <label className="block text-label-caps text-[var(--color-on-surface-variant)] mb-1.5">
+              Workout Date
+            </label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+              className="w-full px-4 py-2.5 rounded-xl bg-[var(--color-surface-dim)] text-[var(--color-on-surface)] text-body-sm font-medium border-none outline-none"
+            />
+          </div>
           {[
             { key: 'calories', label: 'Calories (kcal)', type: 'number' },
             { key: 'avgHR', label: 'Avg Heart Rate (bpm)', type: 'number' },
@@ -52,29 +103,22 @@ function VerificationModal({ file, onClose, onSave }: {
             { key: 'mets', label: 'METs', type: 'number' },
           ].map(({ key, label, type }) => (
             <div key={key}>
-              <label className="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5 uppercase tracking-wider">
+              <label className="block text-label-caps text-[var(--color-on-surface-variant)] mb-1.5">
                 {label}
               </label>
               <input
                 type={type}
                 value={formData[key as keyof typeof formData]}
                 onChange={(e) => setFormData((prev) => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
-                className="
-                  w-full px-4 py-2.5 rounded-[var(--radius-md)]
-                  bg-[var(--color-neu-inset)] shadow-[var(--shadow-neu-inset)]
-                  text-[var(--color-text-primary)] text-sm font-medium
-                  border-none outline-none
-                  focus:shadow-[var(--shadow-glow-accent)]
-                  transition-shadow duration-200
-                "
+                className="w-full px-4 py-2.5 rounded-xl bg-[var(--color-surface-dim)] text-[var(--color-on-surface)] text-body-sm font-medium border-none outline-none"
               />
             </div>
           ))}
         </div>
 
         {formData.durationSeconds > 0 && (
-          <p className="text-xs text-[var(--color-text-muted)] mt-2">
-            Duration preview: <span className="text-[var(--color-accent)] font-medium">{formatDuration(formData.durationSeconds)}</span>
+          <p className="text-body-sm text-[var(--color-on-surface-variant)] mt-2">
+            Duration preview: <span className="text-[var(--color-primary)] font-medium">{formatDuration(formData.durationSeconds)}</span>
           </p>
         )}
 
@@ -94,14 +138,45 @@ function VerificationModal({ file, onClose, onSave }: {
 export default function UploadHistory() {
   const { uploads, loading, error, addUpload, commitWorkout, deleteUpload } = useWorkouts();
   const [verifyFile, setVerifyFile] = useState<UploadFile | null>(null);
+  
+  // Local state to store parsed data and updated statuses since backend doesn't support partial updates before commit
+  const [localParsedData, setLocalParsedData] = useState<Record<string, any>>({});
+  const [localStatuses, setLocalStatuses] = useState<Record<string, UploadFile['status']>>({});
 
   const handleFilesAdded = async (files: File[]) => {
     for (const f of files) {
-      await addUpload({
+      // Create initial upload entry in processing state
+      const newId = await addUpload({
         name: f.name,
-        status: 'verified', // Skip processing step for demo
+        status: 'processing',
         uploadedAt: new Date().toISOString(),
       });
+
+      if (!newId) continue;
+      
+      setLocalStatuses(prev => ({ ...prev, [newId]: 'processing' }));
+
+      try {
+        // Run Tesseract OCR on the file
+        const imageUrl = URL.createObjectURL(f);
+        const { data: { text } } = await Tesseract.recognize(
+          imageUrl,
+          'eng',
+          { logger: m => console.log(m) }
+        );
+        URL.revokeObjectURL(imageUrl);
+
+        // Parse extracted text
+        const parsedData = parseOcrText(text);
+
+        // Update local state
+        setLocalParsedData(prev => ({ ...prev, [newId]: parsedData }));
+        setLocalStatuses(prev => ({ ...prev, [newId]: 'verified' }));
+
+      } catch (err) {
+        console.error("OCR failed for file", f.name, err);
+        setLocalStatuses(prev => ({ ...prev, [newId]: 'error' }));
+      }
     }
   };
 
@@ -118,12 +193,12 @@ export default function UploadHistory() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-[var(--color-text-muted)]">Loading uploads...</div>;
+    return <div className="p-8 text-center text-[var(--color-on-surface-variant)]">Loading uploads...</div>;
   }
 
   if (error) {
     return (
-      <div className="p-8 text-center text-[var(--color-error)] flex flex-col items-center gap-2">
+      <div className="p-8 text-center text-[#FF3B30] flex flex-col items-center gap-2">
         <AlertCircle size={32} />
         <p>Failed to load uploads: {error}</p>
       </div>
@@ -131,55 +206,58 @@ export default function UploadHistory() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10 animate-fade-in-up">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-text-primary)] font-[var(--font-heading)]">
+        <h1 className="text-headline-lg-mobile text-[var(--color-primary)]">
           Upload History
         </h1>
-        <p className="text-[var(--color-text-secondary)] text-sm mt-1">
-          Upload workout screenshots for processing
+        <p className="text-[var(--color-on-surface-variant)] text-body-sm mt-1">
+          Upload workout screenshots for automatic OCR processing
         </p>
       </div>
 
       {/* Upload Zone */}
-      <Card variant="raised">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 font-[var(--font-heading)]">
+      <Card variant="stat">
+        <h3 className="text-title-md text-[var(--color-on-surface)] mb-4">
           Upload Screenshots
         </h3>
         <Dropzone onFilesAdded={handleFilesAdded} />
       </Card>
 
       {/* Processing Queue */}
-      <Card variant="raised">
+      <Card variant="stat">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] font-[var(--font-heading)]">
+          <h3 className="text-title-md text-[var(--color-on-surface)]">
             Upload Queue
           </h3>
-          <span className="text-xs text-[var(--color-text-muted)]">
+          <span className="text-body-sm text-[var(--color-on-surface-variant)]">
             {uploads.length} files
           </span>
         </div>
 
         {uploads.length === 0 ? (
-          <p className="text-center text-[var(--color-text-muted)] py-4 text-sm">No uploads yet.</p>
+          <p className="text-center text-[var(--color-on-surface-variant)] py-4 text-body-sm">No uploads yet.</p>
         ) : (
           <div className="space-y-2.5">
             {uploads.map((upload) => {
-              const status = statusConfig[upload.status];
+              const currentStatus = localStatuses[upload.id] || upload.status;
+              const status = statusConfig[currentStatus];
               const StatusIcon = status.icon;
+              const currentParsedData = localParsedData[upload.id] || upload.parsedData;
+              
               return (
                 <div
                   key={upload.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-[var(--radius-md)] bg-[var(--color-neu-inset)] shadow-[var(--shadow-neu-inset)] transition-all duration-200 hover:bg-[var(--color-neu-surface)] gap-3"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-[var(--color-surface-dim)] border border-[var(--color-outline-variant)]/30 transition-all duration-200 hover:bg-[var(--color-surface)] gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 flex-shrink-0 rounded-[var(--radius-sm)] bg-[var(--color-neu-surface)] shadow-[var(--shadow-neu-button)] flex items-center justify-center">
-                      <FileImage size={16} className="text-[var(--color-text-muted)]" />
+                    <div className="w-9 h-9 flex-shrink-0 rounded-lg bg-[var(--color-surface)] shadow-sm flex items-center justify-center">
+                      <FileImage size={16} className="text-[var(--color-on-surface-variant)]" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[var(--color-text-primary)] truncate max-w-[200px]">{upload.name}</p>
-                      <p className="text-xs text-[var(--color-text-muted)]">
+                      <p className="text-body-md font-medium text-[var(--color-on-surface)] truncate max-w-[200px]">{upload.name}</p>
+                      <p className="text-body-sm text-[var(--color-on-surface-variant)]">
                         {new Date(upload.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -187,25 +265,26 @@ export default function UploadHistory() {
 
                   <div className="flex items-center gap-3 self-end sm:self-auto">
                     {/* Parsed Data Preview */}
-                    {upload.parsedData && (
-                      <div className="hidden lg:flex items-center gap-3 text-xs text-[var(--color-text-secondary)]">
-                        <span>{upload.parsedData.calories} kcal</span>
-                        <span>{upload.parsedData.avgHR} bpm</span>
+                    {currentParsedData && (
+                      <div className="hidden lg:flex items-center gap-3 text-body-sm text-[var(--color-on-surface-variant)]">
+                        {currentParsedData.date && <span>{currentParsedData.date}</span>}
+                        <span>{currentParsedData.calories} kcal</span>
+                        <span>{currentParsedData.avgHR} bpm</span>
                       </div>
                     )}
 
                     {/* Status Badge */}
                     <div
-                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap"
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
                       style={{ backgroundColor: `${status.color}18`, color: status.color }}
                     >
-                      <StatusIcon size={13} className={upload.status === 'processing' ? 'animate-spin' : ''} />
+                      <StatusIcon size={13} className={currentStatus === 'processing' ? 'animate-spin' : ''} />
                       {status.label}
                     </div>
 
                     {/* Actions */}
                     <div className="flex items-center gap-1">
-                      {(upload.status === 'verified' || upload.status === 'processing') && (
+                      {(currentStatus === 'verified' || currentStatus === 'processing') && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -220,7 +299,7 @@ export default function UploadHistory() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-[var(--color-error)] hover:bg-[var(--color-error)]/10"
+                        className="text-[#FF3B30] hover:bg-[#FF3B30]/10"
                         onClick={() => handleDelete(upload.id)}
                         title="Delete Upload"
                       >
@@ -237,7 +316,12 @@ export default function UploadHistory() {
 
       {/* Verification Modal */}
       {verifyFile && (
-        <VerificationModal file={verifyFile} onClose={() => setVerifyFile(null)} onSave={handleSave} />
+        <VerificationModal 
+          file={verifyFile} 
+          parsedDataOverride={localParsedData[verifyFile.id]}
+          onClose={() => setVerifyFile(null)} 
+          onSave={handleSave} 
+        />
       )}
     </div>
   );

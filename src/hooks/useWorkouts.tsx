@@ -7,7 +7,7 @@ interface WorkoutsContextType {
   loading: boolean;
   error: string | null;
   refreshData: () => Promise<void>;
-  addUpload: (upload: Partial<UploadFile>) => Promise<void>;
+  addUpload: (upload: Partial<UploadFile>) => Promise<string | undefined>;
   commitWorkout: (uploadId: string, workoutData: any) => Promise<void>;
   deleteUpload: (id: string) => Promise<void>;
   clearAllData: () => Promise<void>;
@@ -48,7 +48,11 @@ export function WorkoutsProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'new_upload', upload }),
       });
-      if (res.ok) await refreshData();
+      if (res.ok) {
+        const data = await res.json();
+        await refreshData();
+        return data.id;
+      }
     } catch (err) {
       console.error(err);
     }

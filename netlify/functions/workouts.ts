@@ -99,10 +99,12 @@ export const handler: Handler = async (event) => {
           { name: 'Extreme', color: '#FF3B30', percentage: 2, minutes: Math.round((workoutData.durationSeconds || 0) / 60 * 0.02) },
         ];
 
+        const workoutDate = workoutData.date || new Date().toISOString().split('T')[0];
+
         // Insert workout
         await sql`
           INSERT INTO workouts (id, date, type, calories, avg_hr, peak_hr, duration_seconds, mets)
-          VALUES (${workoutId}, ${new Date().toISOString().split('T')[0]}, 'Mixed', ${workoutData.calories}, ${workoutData.avgHR}, ${workoutData.avgHR + 20}, ${workoutData.durationSeconds}, ${workoutData.mets})
+          VALUES (${workoutId}, ${workoutDate}, 'Mixed', ${workoutData.calories}, ${workoutData.avgHR}, ${workoutData.avgHR + 20}, ${workoutData.durationSeconds}, ${workoutData.mets})
         `;
 
         // Insert HR zones

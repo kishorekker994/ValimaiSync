@@ -9,7 +9,7 @@ function TopAppBar() {
   return (
     <header className="fixed top-0 w-full z-50 backdrop-blur-xl bg-[var(--color-surface-glass)] shadow-sm flex justify-between items-center px-5 h-16">
       <div className="flex items-center gap-3">
-        <img alt="ValimaiSync Logo" className="w-8 h-8 rounded-lg object-contain bg-[var(--color-primary)] p-1" src="/logo.svg" />
+        <img alt="ValimaiSync Logo" className="w-10 h-10 object-contain" src="/logo.svg" />
         <h1 className="text-headline-lg-mobile font-extrabold text-[var(--color-primary)]">ValimaiSync</h1>
       </div>
       <div className="flex items-center gap-4">

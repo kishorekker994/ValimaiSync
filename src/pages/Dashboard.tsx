@@ -1,9 +1,11 @@
 import { useWorkouts } from '../hooks/useWorkouts';
 import { RefreshCw, Activity, Flame, Timer, TrendingUp, Heart } from 'lucide-react';
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const { workouts, loading, error, refreshData } = useWorkouts();
+  const navigate = useNavigate();
 
   const stats = useMemo(() => {
     if (!workouts || workouts.length === 0) return null;
@@ -98,25 +100,25 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <section className="mb-stack-lg grid grid-cols-4 gap-4">
         <div className="flex flex-col items-center gap-2">
-          <button className="w-14 h-14 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-lg transition-transform active:scale-90 cursor-pointer">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="w-14 h-14 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-lg transition-transform active:scale-90 cursor-pointer">
             <Activity size={24} />
           </button>
           <span className="text-label-caps text-[10px] text-center">ACTIVITY</span>
         </div>
         <div className="flex flex-col items-center gap-2">
-          <button className="w-14 h-14 rounded-2xl bg-white text-[var(--color-primary)] border border-[var(--color-primary)]/20 flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer">
+          <button onClick={() => navigate('/uploads')} className="w-14 h-14 rounded-2xl bg-white text-[var(--color-primary)] border border-[var(--color-primary)]/20 flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer">
             <RefreshCw size={24} />
           </button>
           <span className="text-label-caps text-[10px] text-center">SYNC DATA</span>
         </div>
         <div className="flex flex-col items-center gap-2">
-          <button className="w-14 h-14 rounded-2xl bg-white text-[var(--color-primary)] border border-[var(--color-primary)]/20 flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer">
+          <button onClick={() => navigate('/analytics')} className="w-14 h-14 rounded-2xl bg-white text-[var(--color-primary)] border border-[var(--color-primary)]/20 flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer">
             <Flame size={24} />
           </button>
           <span className="text-label-caps text-[10px] text-center">GOALS</span>
         </div>
         <div className="flex flex-col items-center gap-2">
-          <button className="w-14 h-14 rounded-2xl gold-accent text-white flex items-center justify-center shadow-lg transition-transform active:scale-90 cursor-pointer">
+          <button onClick={() => navigate('/analytics')} className="w-14 h-14 rounded-2xl gold-accent text-white flex items-center justify-center shadow-lg transition-transform active:scale-90 cursor-pointer">
             <TrendingUp size={24} />
           </button>
           <span className="text-label-caps text-[10px] text-center">TRENDS</span>
