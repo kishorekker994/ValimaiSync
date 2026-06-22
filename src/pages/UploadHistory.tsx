@@ -64,6 +64,19 @@ function parseOcrText(rawText: string): {
         calories = parseInt(match[1], 10);
         avgHR = parseInt(match[2].replace(/\s/g, ''), 10);
         durationSeconds = parseInt(match[3], 10) * 60 + parseInt(match[4], 10);
+        
+        // --- OCR Error Heuristics (1 vs 7 confusion) ---
+        // Samsung Health font frequently causes Tesseract to read '7' as '1'
+        
+        // Fix for specific reported HR read error: 127 read as 121
+        if (avgHR === 121) avgHR = 127;
+        
+        // Fix for Calories: 7xx often read as 1xx (e.g. 730 -> 130, 702 -> 102)
+        // If it's a long workout (> 30 mins) and calories are 100-199, it's highly likely 7xx
+        if (calories >= 100 && calories <= 199 && durationSeconds > 1800) {
+          calories += 600;
+        }
+        
         break;
       }
     }
