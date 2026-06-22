@@ -88,16 +88,24 @@ export const handler: Handler = async (event) => {
       if (type === 'commit_workout') {
         const { uploadId, workoutData } = body;
         const workoutId = `w-${Date.now()}`;
-        
-        // Ensure hrZones exist for calculating percentages later if needed. For now, generate mock HR zones if none.
-        const hrZones = workoutData.hrZones || [
-          { name: 'Normal', color: '#8E8E93', percentage: 10, minutes: Math.round((workoutData.durationSeconds || 0) / 60 * 0.1) },
-          { name: 'Warm Up', color: '#5AC8FA', percentage: 20, minutes: Math.round((workoutData.durationSeconds || 0) / 60 * 0.2) },
-          { name: 'Fat Burning', color: '#34C759', percentage: 40, minutes: Math.round((workoutData.durationSeconds || 0) / 60 * 0.4) },
-          { name: 'Aerobic', color: '#FFCC00', percentage: 20, minutes: Math.round((workoutData.durationSeconds || 0) / 60 * 0.2) },
-          { name: 'Anaerobic', color: '#FF9500', percentage: 8, minutes: Math.round((workoutData.durationSeconds || 0) / 60 * 0.08) },
-          { name: 'Extreme', color: '#FF3B30', percentage: 2, minutes: Math.round((workoutData.durationSeconds || 0) / 60 * 0.02) },
-        ];
+        const totalMinutes = (workoutData.durationSeconds || 0) / 60;
+
+        // Use parsed hrZones from OCR if available; otherwise generate reasonable defaults
+        const hrZones = (workoutData.hrZones && workoutData.hrZones.length > 0)
+          ? workoutData.hrZones.map((z: any) => ({
+              name: z.name,
+              color: z.color,
+              percentage: z.percentage || 0,
+              minutes: z.minutes ?? Math.round((z.percentage / 100) * totalMinutes),
+            }))
+          : [
+              { name: 'Normal', color: '#8E8E93', percentage: 10, minutes: Math.round(totalMinutes * 0.1) },
+              { name: 'Warm Up', color: '#5AC8FA', percentage: 20, minutes: Math.round(totalMinutes * 0.2) },
+              { name: 'Fat Burning', color: '#34C759', percentage: 40, minutes: Math.round(totalMinutes * 0.4) },
+              { name: 'Aerobic', color: '#FFCC00', percentage: 20, minutes: Math.round(totalMinutes * 0.2) },
+              { name: 'Anaerobic', color: '#FF9500', percentage: 8, minutes: Math.round(totalMinutes * 0.08) },
+              { name: 'Extreme', color: '#FF3B30', percentage: 2, minutes: Math.round(totalMinutes * 0.02) },
+            ];
 
         const workoutDate = workoutData.date || new Date().toISOString().split('T')[0];
 

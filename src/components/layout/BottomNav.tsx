@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, BarChart3, Upload, Settings } from 'lucide-react';
+import { Home, BarChart3, Upload } from 'lucide-react';
 
 export default function BottomNav() {
   return (
@@ -37,14 +37,6 @@ export default function BottomNav() {
         <Upload size={24} strokeWidth={2.5} />
         <span className="text-label-caps text-[10px] mt-1">Uploads</span>
       </NavLink>
-
-      <div
-        className="flex flex-col items-center justify-center text-[var(--color-on-surface-variant)]/60 hover:text-[var(--color-primary)] transition-transform active:scale-90 duration-150 cursor-pointer"
-        onClick={() => alert("Settings coming soon")}
-      >
-        <Settings size={24} strokeWidth={2.5} />
-        <span className="text-label-caps text-[10px] mt-1">Settings</span>
-      </div>
     </nav>
   );
 }
