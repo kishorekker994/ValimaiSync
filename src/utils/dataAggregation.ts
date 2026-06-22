@@ -1,18 +1,21 @@
 import { WorkoutRecord, WeeklyData } from '../types';
 import { HR_ZONES } from '../utils/constants';
 
-export function getWeeklyData(workouts: WorkoutRecord[]): WeeklyData[] {
+export function getDailyData(workouts: WorkoutRecord[]): WeeklyData[] {
   const sorted = [...workouts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const weeks: WeeklyData[] = [];
+  const days: Map<string, WorkoutRecord[]> = new Map();
+  sorted.forEach((w) => {
+    const d = new Date(w.date);
+    const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (!days.has(key)) days.set(key, []);
+    days.get(key)!.push(w);
+  });
   
-  for (let i = 0; i < sorted.length; i += 7) {
-    const chunk = sorted.slice(i, i + 7);
-    const startDate = new Date(chunk[0].date);
-    const weekLabel = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return Array.from(days.entries()).map(([day, chunk]) => {
     const totalDurationMins = Math.round(chunk.reduce((s, w) => s + w.durationSeconds, 0) / 60);
     const totalCalories = chunk.reduce((s, w) => s + w.calories, 0);
-    weeks.push({
-      week: weekLabel,
+    return {
+      week: day, // Keeping 'week' as key for Recharts compatibility
       avgHR: Math.round(chunk.reduce((s, w) => s + w.avgHR, 0) / chunk.length) || 0,
       peakHR: Math.max(...chunk.map((w) => w.peakHR), 0),
       calories: totalCalories,
@@ -27,9 +30,8 @@ export function getWeeklyData(workouts: WorkoutRecord[]): WeeklyData[] {
         }, 0);
         return acc;
       }, {} as Record<string, number>),
-    });
-  }
-  return weeks;
+    };
+  });
 }
 
 export function getMonthlyData(workouts: WorkoutRecord[]): WeeklyData[] {

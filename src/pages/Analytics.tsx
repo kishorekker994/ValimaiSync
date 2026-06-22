@@ -9,7 +9,7 @@ import {
 import Card from '../components/ui/Card';
 import Tabs from '../components/ui/Tabs';
 import { useWorkouts } from '../hooks/useWorkouts';
-import { getWeeklyData, getMonthlyData, getDayOfWeekData } from '../utils/dataAggregation';
+import { getDailyData, getMonthlyData, getDayOfWeekData } from '../utils/dataAggregation';
 import { HR_ZONES } from '../utils/constants';
 
 const periodTabs = [
@@ -39,8 +39,8 @@ export default function Analytics() {
 
   const data = useMemo(() => {
     if (!workouts || workouts.length === 0) return [];
-    if (period === 'weekly') return getWeeklyData(workouts);
-    if (period === 'monthly') return getMonthlyData(workouts);
+    if (period === 'weekly') return getDailyData(workouts).slice(-7);
+    if (period === 'monthly') return getDailyData(workouts).slice(-30);
     const monthly = getMonthlyData(workouts);
     if (period === 'quarterly') return monthly.slice(-3);
     return monthly;
