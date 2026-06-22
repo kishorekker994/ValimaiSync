@@ -32,4 +32,6 @@ export interface WeeklyData {
   calories: number;
   durationMinutes: number;
   zones: Record<string, number>;
+  mets: number;
+  efficiency: number;
 }

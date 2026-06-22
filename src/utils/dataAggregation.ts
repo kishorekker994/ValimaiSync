@@ -9,12 +9,16 @@ export function getWeeklyData(workouts: WorkoutRecord[]): WeeklyData[] {
     const chunk = sorted.slice(i, i + 7);
     const startDate = new Date(chunk[0].date);
     const weekLabel = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const totalDurationMins = Math.round(chunk.reduce((s, w) => s + w.durationSeconds, 0) / 60);
+    const totalCalories = chunk.reduce((s, w) => s + w.calories, 0);
     weeks.push({
       week: weekLabel,
       avgHR: Math.round(chunk.reduce((s, w) => s + w.avgHR, 0) / chunk.length) || 0,
       peakHR: Math.max(...chunk.map((w) => w.peakHR), 0),
-      calories: chunk.reduce((s, w) => s + w.calories, 0),
-      durationMinutes: Math.round(chunk.reduce((s, w) => s + w.durationSeconds, 0) / 60),
+      calories: totalCalories,
+      durationMinutes: totalDurationMins,
+      mets: Number((chunk.reduce((s, w) => s + (w.mets || 6), 0) / chunk.length).toFixed(1)) || 0,
+      efficiency: totalDurationMins > 0 ? Number((totalCalories / totalDurationMins).toFixed(1)) : 0,
       zones: HR_ZONES.reduce((acc, zone, idx) => {
         // Find matching zone name from workout hrZones
         acc[zone.key] = chunk.reduce((s, w) => {
@@ -37,18 +41,43 @@ export function getMonthlyData(workouts: WorkoutRecord[]): WeeklyData[] {
     if (!months.has(key)) months.set(key, []);
     months.get(key)!.push(w);
   });
-  return Array.from(months.entries()).map(([month, chunk]) => ({
-    week: month,
-    avgHR: Math.round(chunk.reduce((s, w) => s + w.avgHR, 0) / chunk.length) || 0,
-    peakHR: Math.max(...chunk.map((w) => w.peakHR), 0),
-    calories: chunk.reduce((s, w) => s + w.calories, 0),
-    durationMinutes: Math.round(chunk.reduce((s, w) => s + w.durationSeconds, 0) / 60),
-    zones: HR_ZONES.reduce((acc, zone, idx) => {
-      acc[zone.key] = chunk.reduce((s, w) => {
-        const z = w.hrZones?.find(hz => hz.name === zone.name);
-        return s + (z ? z.minutes : 0);
-      }, 0);
-      return acc;
-    }, {} as Record<string, number>),
+  return Array.from(months.entries()).map(([month, chunk]) => {
+    const totalDurationMins = Math.round(chunk.reduce((s, w) => s + w.durationSeconds, 0) / 60);
+    const totalCalories = chunk.reduce((s, w) => s + w.calories, 0);
+    return {
+      week: month,
+      avgHR: Math.round(chunk.reduce((s, w) => s + w.avgHR, 0) / chunk.length) || 0,
+      peakHR: Math.max(...chunk.map((w) => w.peakHR), 0),
+      calories: totalCalories,
+      durationMinutes: totalDurationMins,
+      mets: Number((chunk.reduce((s, w) => s + (w.mets || 6), 0) / chunk.length).toFixed(1)) || 0,
+      efficiency: totalDurationMins > 0 ? Number((totalCalories / totalDurationMins).toFixed(1)) : 0,
+      zones: HR_ZONES.reduce((acc, zone, idx) => {
+        acc[zone.key] = chunk.reduce((s, w) => {
+          const z = w.hrZones?.find(hz => hz.name === zone.name);
+          return s + (z ? z.minutes : 0);
+        }, 0);
+        return acc;
+      }, {} as Record<string, number>),
+    };
+  });
+}
+
+export function getDayOfWeekData(workouts: WorkoutRecord[]) {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayCounts = new Array(7).fill(0);
+  const dayCalories = new Array(7).fill(0);
+
+  workouts.forEach((w) => {
+    const date = new Date(w.date);
+    const dayIdx = date.getDay();
+    dayCounts[dayIdx]++;
+    dayCalories[dayIdx] += w.calories;
+  });
+
+  return days.map((day, i) => ({
+    day,
+    count: dayCounts[i],
+    calories: dayCalories[i]
   }));
 }

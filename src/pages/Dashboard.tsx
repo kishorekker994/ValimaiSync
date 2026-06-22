@@ -20,13 +20,14 @@ export default function Dashboard() {
     // Max Peak HR
     const maxPeakHR = Math.max(...workouts.map(w => w.peakHR));
 
-    // Aggregate HR zones
+    // Aggregate HR zones based on Samsung Health
     const zoneMinutes = {
-      'Zone 1 (Light)': 0,
-      'Zone 2 (Fat Burn)': 0,
-      'Zone 3 (Cardio)': 0,
-      'Zone 4 (Hard)': 0,
-      'Zone 5 (Peak)': 0,
+      'Normal': 0,
+      'Warm Up': 0,
+      'Fat Burning': 0,
+      'Aerobic': 0,
+      'Anaerobic': 0,
+      'Extreme': 0,
     };
     
     workouts.forEach(w => {
@@ -129,7 +130,7 @@ export default function Dashboard() {
       <section className="mb-stack-lg">
         <div className="flex justify-between items-center mb-stack-sm">
           <h3 className="text-title-md text-[var(--color-on-surface)]">Overview</h3>
-          <button className="text-[var(--color-primary)] text-label-caps cursor-pointer hover:underline">VIEW ALL</button>
+          <button onClick={() => navigate('/uploads')} className="text-[var(--color-primary)] text-label-caps cursor-pointer hover:underline">VIEW ALL</button>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
@@ -185,11 +186,12 @@ export default function Dashboard() {
           <div className="h-4 w-full bg-[var(--color-surface-variant)] rounded-full overflow-hidden flex mb-6">
             {stats.totalZoneMinutes > 0 ? (
               <>
-                <div className="h-full bg-[var(--color-surface-dim)]" style={{ width: `${(stats.zoneMinutes['Zone 1 (Light)'] / stats.totalZoneMinutes) * 100}%` }} title="Zone 1"></div>
-                <div className="h-full bg-[var(--color-success-emerald)]" style={{ width: `${(stats.zoneMinutes['Zone 2 (Fat Burn)'] / stats.totalZoneMinutes) * 100}%` }} title="Zone 2"></div>
-                <div className="h-full bg-[var(--color-wealth-gold)]" style={{ width: `${(stats.zoneMinutes['Zone 3 (Cardio)'] / stats.totalZoneMinutes) * 100}%` }} title="Zone 3"></div>
-                <div className="h-full bg-[var(--color-secondary-container)]" style={{ width: `${(stats.zoneMinutes['Zone 4 (Hard)'] / stats.totalZoneMinutes) * 100}%` }} title="Zone 4"></div>
-                <div className="h-full bg-[var(--color-error)]" style={{ width: `${(stats.zoneMinutes['Zone 5 (Peak)'] / stats.totalZoneMinutes) * 100}%` }} title="Zone 5"></div>
+                <div className="h-full" style={{ backgroundColor: '#8E8E93', width: `${(stats.zoneMinutes['Normal'] / stats.totalZoneMinutes) * 100}%` }} title="Normal"></div>
+                <div className="h-full" style={{ backgroundColor: '#5AC8FA', width: `${(stats.zoneMinutes['Warm Up'] / stats.totalZoneMinutes) * 100}%` }} title="Warm Up"></div>
+                <div className="h-full" style={{ backgroundColor: '#34C759', width: `${(stats.zoneMinutes['Fat Burning'] / stats.totalZoneMinutes) * 100}%` }} title="Fat Burning"></div>
+                <div className="h-full" style={{ backgroundColor: '#FFCC00', width: `${(stats.zoneMinutes['Aerobic'] / stats.totalZoneMinutes) * 100}%` }} title="Aerobic"></div>
+                <div className="h-full" style={{ backgroundColor: '#FF9500', width: `${(stats.zoneMinutes['Anaerobic'] / stats.totalZoneMinutes) * 100}%` }} title="Anaerobic"></div>
+                <div className="h-full" style={{ backgroundColor: '#FF3B30', width: `${(stats.zoneMinutes['Extreme'] / stats.totalZoneMinutes) * 100}%` }} title="Extreme"></div>
               </>
             ) : (
               <div className="h-full bg-[var(--color-surface-variant)] w-full"></div>
@@ -199,35 +201,49 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-[var(--color-error)]"></div>
-                <span className="text-body-lg">Zone 5 (Peak)</span>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#FF3B30' }}></div>
+                <span className="text-body-lg">Extreme</span>
               </div>
-              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Zone 5 (Peak)'])} min</span>
+              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Extreme'])} min</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-[var(--color-secondary-container)]"></div>
-                <span className="text-body-lg">Zone 4 (Hard)</span>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#FF9500' }}></div>
+                <span className="text-body-lg">Anaerobic</span>
               </div>
-              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Zone 4 (Hard)'])} min</span>
+              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Anaerobic'])} min</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-[var(--color-wealth-gold)]"></div>
-                <span className="text-body-lg">Zone 3 (Cardio)</span>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#FFCC00' }}></div>
+                <span className="text-body-lg">Aerobic</span>
               </div>
-              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Zone 3 (Cardio)'])} min</span>
+              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Aerobic'])} min</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-[var(--color-success-emerald)]"></div>
-                <span className="text-body-lg">Zone 2 (Fat Burn)</span>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#34C759' }}></div>
+                <span className="text-body-lg">Fat Burning</span>
               </div>
-              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Zone 2 (Fat Burn)'])} min</span>
+              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Fat Burning'])} min</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#5AC8FA' }}></div>
+                <span className="text-body-lg">Warm Up</span>
+              </div>
+              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Warm Up'])} min</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#8E8E93' }}></div>
+                <span className="text-body-lg">Normal</span>
+              </div>
+              <span className="text-numeric-data">{Math.round(stats.zoneMinutes['Normal'])} min</span>
             </div>
           </div>
           
-          <button className="w-full mt-6 py-3 border border-[var(--color-outline-variant)] rounded-xl text-label-caps text-[var(--color-primary)] hover:bg-[var(--color-surface-variant)]/30 transition-colors cursor-pointer">
+          <button onClick={() => navigate('/analytics')} className="w-full mt-6 py-3 border border-[var(--color-outline-variant)] rounded-xl text-label-caps text-[var(--color-primary)] hover:bg-[var(--color-surface-variant)]/30 transition-colors cursor-pointer">
             VIEW FULL BREAKDOWN
           </button>
         </div>
