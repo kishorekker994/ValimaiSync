@@ -13,8 +13,8 @@ export function formatDuration(totalSeconds: number): string {
 /**
  * Format calories with unit
  */
-export function formatCalories(kcal: number): string {
-  return `${kcal.toLocaleString()} kcal`;
+export function formatCalories(cal: number): string {
+  return `${cal.toLocaleString()} Cal`;
 }
 
 /**

@@ -44,124 +44,43 @@ function parseOcrText(rawText: string): {
   const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
   const flat = rawText.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ');
 
-  // ── 1. Calories ──────────────────────────────────────────────────────────────
-  // Pattern A: "<number> Cal" with optional small-text suffix (e.g. "583 Cal")
-  // Pattern B: label "Calories" appears a couple of lines after the number
+  // ── 1. Stats Row: Calories, Avg.HR, Duration ─────────────────────────────────
   let calories = 0;
-  const calLineMatch = flat.match(/(\d{2,4})\s*(?:Cal\b|Kcal\b)/i);
-  if (calLineMatch) {
-    calories = parseInt(calLineMatch[1], 10);
-  }
-  if (!calories) {
-    // Try finding a large 3-4 digit number near "Calories" label
-    const caloriesLabelIdx = lines.findIndex(l => /^Calories$/i.test(l));
-    if (caloriesLabelIdx > 0) {
-      // Look in the previous 1-3 lines for a number
-      for (let i = caloriesLabelIdx - 1; i >= Math.max(0, caloriesLabelIdx - 3); i--) {
-        const m = lines[i].match(/^(\d{2,4})/);
-        if (m) { calories = parseInt(m[1], 10); break; }
-      }
-    }
-  }
-  if (!calories) {
-    // last-resort: first 3-4 digit number in text
-    const m = flat.match(/\b(\d{3,4})\b/);
-    if (m) calories = parseInt(m[1], 10);
-  }
-
-  // ── 2. Average Heart Rate ─────────────────────────────────────────────────────
-  // Pattern A: "<number> bpm" (could be "120 bpm" or "120bpm")
-  // Pattern B: label "Avg.HR" or "Avg. HR" appears a couple of lines after the number
   let avgHR = 0;
-  const bpmMatch = flat.match(/(\d{2,3})\s*bpm\b/i);
-  if (bpmMatch) {
-    avgHR = parseInt(bpmMatch[1], 10);
-  }
-  if (!avgHR) {
-    const avgHRLabelIdx = lines.findIndex(l => /Avg\.?\s*HR/i.test(l));
-    if (avgHRLabelIdx > 0) {
-      for (let i = avgHRLabelIdx - 1; i >= Math.max(0, avgHRLabelIdx - 3); i--) {
-        const m = lines[i].match(/^(\d{2,3})/);
-        if (m) { avgHR = parseInt(m[1], 10); break; }
-      }
-    }
-  }
-  if (!avgHR) {
-    // Fallback: second 2-3 digit number in flat text (after calories)
-    const nums = [...flat.matchAll(/\b(\d{2,3})\b/g)];
-    // Filter out numbers that look like years or timestamps
-    const hrCandidates = nums.map(n => parseInt(n[1], 10)).filter(n => n >= 50 && n <= 220);
-    if (hrCandidates.length > 0) avgHR = hrCandidates[0];
-  }
-
-  // ── 3. Duration ───────────────────────────────────────────────────────────────
-  // Samsung Health shows duration as "<min>.<sec>" e.g. "60.25" or "60 min 25 sec"
-  // Also could be "60.25 sec" or just "60.25" near "Duration" label
   let durationSeconds = 0;
 
-  // Pattern A: explicit "min" and "sec" (e.g. "60 min 25 sec")
-  const minSecMatch = flat.match(/(\d{1,3})\s*min\s*(\d{1,2})\s*sec/i);
-  if (minSecMatch) {
-    durationSeconds = parseInt(minSecMatch[1], 10) * 60 + parseInt(minSecMatch[2], 10);
-  }
-
-  if (!durationSeconds) {
-    // Pattern B: Samsung Health digit pattern "<mm>.<ss>" near "Duration" label
-    // The display shows e.g. "60 25" or "60.25" where 60=min, 25=sec
-    // Look for label "Duration" and grab numbers before it
-    const durationLabelIdx = lines.findIndex(l => /^Duration$/i.test(l));
-    if (durationLabelIdx > 0) {
-      for (let i = durationLabelIdx - 1; i >= Math.max(0, durationLabelIdx - 4); i--) {
-        // Could be "60.25", "60 25", "60,25"
-        const dotMatch = lines[i].match(/(\d{1,3})[.\s,]+(\d{2})\b/);
-        if (dotMatch) {
-          durationSeconds = parseInt(dotMatch[1], 10) * 60 + parseInt(dotMatch[2], 10);
-          break;
-        }
-        // Could be just the minutes on one line
-        const minOnly = lines[i].match(/^(\d{1,3})$/);
-        if (minOnly) {
-          const mins = parseInt(minOnly[1], 10);
-          // Look next line for seconds
-          if (i + 1 < lines.length) {
-            const secMatch = lines[i + 1].match(/^(\d{2})$/);
-            if (secMatch) {
-              durationSeconds = mins * 60 + parseInt(secMatch[1], 10);
-              break;
-            }
-          }
-          if (mins > 5 && mins <= 240) {
-            durationSeconds = mins * 60;
-            break;
-          }
-        }
+  // The text often contains a single line with all 3 numbers, like: "583. 1 20. 60.25." or "698 Cal 1 31 bpm 62.56 sec"
+  // It usually appears immediately before the line containing "Calories AvgHR Duration"
+  const statsLabelIdx = lines.findIndex(l => /Calories.*Avg.*HR.*Duration/i.test(l));
+  if (statsLabelIdx > 0) {
+    // Check up to 2 lines above
+    for (let i = statsLabelIdx - 1; i >= Math.max(0, statsLabelIdx - 2); i--) {
+      // Regex expects:
+      // 1. Calories: 2-4 digits
+      // 2. AvgHR: 1-3 digits possibly containing spaces (e.g. "1 28")
+      // 3. Duration: 1-3 digits followed by a separator and 2 digits
+      const match = lines[i].match(/^(\d{2,4})[^\d\n]*?(\d{1,3}(?:\s*\d{1,2})?)[^\d\n]*?(\d{1,3})[.\s:]+(\d{2})/);
+      if (match) {
+        calories = parseInt(match[1], 10);
+        avgHR = parseInt(match[2].replace(/\s/g, ''), 10);
+        durationSeconds = parseInt(match[3], 10) * 60 + parseInt(match[4], 10);
+        break;
       }
     }
   }
 
-  if (!durationSeconds) {
-    // Pattern C: "<number>.<number>" where first part is ≤240 min (generic fallback)
-    // OCR sometimes reads the dots as different chars; try "60 25" pattern in flat
-    const mmssMatch = flat.match(/\b(\d{2,3})[.\s]+(\d{2})\s*(?:sec|min)?/i);
-    if (mmssMatch) {
-      const mins = parseInt(mmssMatch[1], 10);
-      const secs = parseInt(mmssMatch[2], 10);
-      if (mins <= 240 && secs <= 59) {
-        durationSeconds = mins * 60 + secs;
-      }
-    }
+  // Fallbacks if stats line not matched cleanly
+  if (!calories) {
+    const calMatch = flat.match(/(\d{2,4})\s*(?:Cal|Kcal)/i) || flat.match(/\b(\d{3,4})\b/);
+    if (calMatch) calories = parseInt(calMatch[1], 10);
   }
-
+  if (!avgHR) {
+    const hrMatch = flat.match(/(\d{2,3})\s*bpm\b/i);
+    if (hrMatch) avgHR = parseInt(hrMatch[1], 10);
+  }
   if (!durationSeconds) {
-    // Last resort: hh:mm:ss or mm:ss
-    const colonTime = flat.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
-    if (colonTime) {
-      if (colonTime[3]) {
-        durationSeconds = parseInt(colonTime[1], 10) * 3600 + parseInt(colonTime[2], 10) * 60 + parseInt(colonTime[3], 10);
-      } else {
-        durationSeconds = parseInt(colonTime[1], 10) * 60 + parseInt(colonTime[2], 10);
-      }
-    }
+    const durMatch = flat.match(/(\d{1,3})\s*min\s*(\d{1,2})\s*sec/i) || flat.match(/\b(\d{1,2}):(\d{2})\b/);
+    if (durMatch) durationSeconds = parseInt(durMatch[1], 10) * 60 + parseInt(durMatch[2], 10);
   }
 
   // ── 4. METs ────────────────────────────────────────────────────────────────────
@@ -282,7 +201,7 @@ function VerificationModal({ file, parsedDataOverride, onClose, onSave }: {
             />
           </div>
           {[
-            { key: 'calories', label: 'Calories (kcal)', type: 'number' },
+            { key: 'calories', label: 'Calories (Cal)', type: 'number' },
             { key: 'avgHR', label: 'Avg Heart Rate (bpm)', type: 'number' },
             { key: 'durationSeconds', label: 'Duration (seconds)', type: 'number' },
             { key: 'mets', label: 'METs (Muscle Energy Technique)', type: 'number' },
@@ -511,7 +430,7 @@ export default function UploadHistory() {
                     {currentParsedData && (
                       <div className="hidden lg:flex items-center gap-3 text-body-sm text-[var(--color-on-surface-variant)]">
                         {currentParsedData.date && <span>{currentParsedData.date}</span>}
-                        <span>{currentParsedData.calories} kcal</span>
+                        <span>{currentParsedData.calories} Cal</span>
                         <span>{currentParsedData.avgHR} bpm</span>
                         <span>{currentParsedData.mets} METs</span>
                       </div>

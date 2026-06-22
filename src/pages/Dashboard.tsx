@@ -85,7 +85,7 @@ export default function Dashboard() {
         <div className="glass-card rounded-3xl p-6 relative overflow-hidden">
           <p className="text-label-caps text-[var(--color-on-surface-variant)] mb-1">TOTAL CALORIES BURNED</p>
           <h2 className="text-display-lg text-[var(--color-primary)] mb-2">
-            {stats.totalCalories.toLocaleString()} <span className="text-title-md text-[var(--color-on-surface-variant)]/60">kcal</span>
+            {stats.totalCalories.toLocaleString()} <span className="text-title-md text-[var(--color-on-surface-variant)]/60">Cal</span>
           </h2>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 text-[var(--color-success-emerald)] bg-[var(--color-success-emerald)]/10 px-2 py-0.5 rounded-full text-numeric-data text-sm">
