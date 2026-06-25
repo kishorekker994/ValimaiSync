@@ -18,20 +18,21 @@ export default function Button({ variant = 'primary', size = 'md', icon, childre
 
   const variants = {
     primary: `
-      bg-[var(--color-accent)] text-white font-semibold
-      shadow-[var(--shadow-neu-button)]
-      hover:shadow-[var(--shadow-glow-accent)] hover:brightness-110
-      active:shadow-[var(--shadow-neu-button-active)] active:scale-[0.97]
+      bg-[var(--color-primary)] text-[var(--color-on-primary)] font-semibold
+      shadow-md
+      hover:shadow-lg hover:brightness-110
+      active:shadow-sm active:scale-[0.97]
     `,
     secondary: `
-      bg-[var(--color-neu-surface)] text-[var(--color-text-primary)]
-      shadow-[var(--shadow-neu-button)]
-      hover:shadow-[var(--shadow-neu-raised)] hover:text-[var(--color-accent)]
-      active:shadow-[var(--shadow-neu-button-active)]
+      bg-[var(--color-surface-dim)] text-[var(--color-on-surface)]
+      shadow-sm border border-[var(--color-outline-variant)]/50
+      hover:shadow-md hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-variant)]
+      active:shadow-none active:scale-[0.97]
     `,
     ghost: `
-      bg-transparent text-[var(--color-text-secondary)]
-      hover:bg-[var(--color-neu-surface)]/50 hover:text-[var(--color-text-primary)]
+      bg-transparent text-[var(--color-on-surface-variant)]
+      hover:bg-[var(--color-surface-dim)] hover:text-[var(--color-on-surface)]
+      active:scale-[0.97]
     `,
   };
 
