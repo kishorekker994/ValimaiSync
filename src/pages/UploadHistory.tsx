@@ -70,10 +70,33 @@ function parseOcrText(rawText: string): {
         
         // Fix for specific reported HR read error: 127 read as 121
         if (avgHR === 121) avgHR = 127;
+
+        // Smart heuristic for Calorie/Duration 1 vs 7 confusion based on Calories/Minute
+        let durMins = Math.floor(durationSeconds / 60);
+        let durSecs = durationSeconds % 60;
+        let calPerMin = calories / (durMins || 1);
+
+        // If calPerMin is extremely high (e.g. 186 cal in 10 mins = 18.6 cal/min)
+        // It means duration or calories (or both) are misread.
+        if (calPerMin > 15 && durMins >= 10 && durMins < 20) {
+          // Check if duration was 70-79 instead of 10-19
+          let altDurMins = durMins + 60;
+          let altCalories = (calories >= 100 && calories <= 199) ? calories + 600 : calories;
+          let altCalPerMin = altCalories / altDurMins;
+          
+          if (altCalPerMin >= 4 && altCalPerMin <= 16) {
+             calories = altCalories;
+             durMins = altDurMins;
+             durationSeconds = durMins * 60 + durSecs;
+          }
+        }
         
-        // Fix for Calories: 7xx often read as 1xx (e.g. 730 -> 130, 702 -> 102)
-        // If it's a long workout (> 30 mins) and calories are 100-199, it's highly likely 7xx
-        if (calories >= 100 && calories <= 199 && durationSeconds > 1800) {
+        // Re-evaluate calPerMin
+        calPerMin = calories / (Math.floor(durationSeconds / 60) || 1);
+        
+        // Fix for Calories: 7xx read as 1xx (e.g. 786 -> 186, 702 -> 102)
+        // If calPerMin is extremely low (< 4) or duration is long (>30 min), calories was likely misread
+        if (calories >= 100 && calories <= 199 && (calPerMin < 4 || durationSeconds > 1800)) {
           calories += 600;
         }
 
@@ -85,11 +108,11 @@ function parseOcrText(rawText: string): {
         }
 
         // Fix for Duration: 57 min read as 51 min
-        let durationMins = Math.floor(durationSeconds / 60);
-        let durationSecs = durationSeconds % 60;
-        if (durationMins === 51) {
-          durationMins = 57;
-          durationSeconds = durationMins * 60 + durationSecs;
+        let finalDurMins = Math.floor(durationSeconds / 60);
+        let finalDurSecs = durationSeconds % 60;
+        if (finalDurMins === 51) {
+          finalDurMins = 57;
+          durationSeconds = finalDurMins * 60 + finalDurSecs;
         }
         
         break;
@@ -192,17 +215,19 @@ function VerificationModal({ file, parsedDataOverride, onClose, onSave }: {
   const initialData = parsedDataOverride || file.parsedData || {};
   const [formData, setFormData] = useState({
     date: initialData.date || new Date().toISOString().split('T')[0],
-    calories: initialData.calories || 0,
-    avgHR: initialData.avgHR || 0,
-    durationSeconds: initialData.durationSeconds || 0,
-    mets: initialData.mets || 0,
+    calories: initialData.calories?.toString() || '0',
+    avgHR: initialData.avgHR?.toString() || '0',
+    durationSeconds: initialData.durationSeconds?.toString() || '0',
+    mets: initialData.mets?.toString() || '0',
     hrZones: initialData.hrZones || [],
   });
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in-up">
-      <div className="bg-[var(--color-surface)] shadow-lg rounded-2xl w-full max-w-md p-6 border border-[var(--color-outline-variant)] max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-5">
+      <div className="bg-[var(--color-surface)] shadow-lg rounded-2xl w-full max-w-md border border-[var(--color-outline-variant)] flex flex-col max-h-[90vh]">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-[var(--color-outline-variant)]/50 shrink-0">
           <h3 className="text-title-md text-[var(--color-on-surface)]">
             Verify Parsed Data
           </h3>
@@ -211,12 +236,12 @@ function VerificationModal({ file, parsedDataOverride, onClose, onSave }: {
           </button>
         </div>
 
-        <p className="text-body-sm text-[var(--color-on-surface-variant)] mb-4">
-          <FileImage size={14} className="inline mr-1.5" />
-          {file.name}
-        </p>
-
-        <div className="space-y-4">
+        {/* Scrollable Body */}
+        <div className="p-5 overflow-y-auto flex-1 space-y-4">
+          <p className="text-body-sm text-[var(--color-on-surface-variant)] mb-2">
+            <FileImage size={14} className="inline mr-1.5" />
+            {file.name}
+          </p>
           <div>
             <label className="block text-label-caps text-[var(--color-on-surface-variant)] mb-1.5">
               Workout Date
@@ -240,8 +265,8 @@ function VerificationModal({ file, parsedDataOverride, onClose, onSave }: {
               </label>
               <input
                 type={type}
-                value={formData[key as keyof typeof formData] as number}
-                onChange={(e) => setFormData((prev) => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+                value={formData[key as keyof typeof formData] as string | number}
+                onChange={(e) => setFormData((prev) => ({ ...prev, [key]: e.target.value }))}
                 className="w-full px-4 py-2.5 rounded-xl bg-[var(--color-surface-dim)] text-[var(--color-on-surface)] text-body-sm font-medium border-none outline-none"
               />
             </div>
@@ -278,19 +303,30 @@ function VerificationModal({ file, parsedDataOverride, onClose, onSave }: {
           )}
         </div>
 
-        {formData.durationSeconds > 0 && (
-          <p className="text-body-sm text-[var(--color-on-surface-variant)] mt-2">
-            Duration preview: <span className="text-[var(--color-primary)] font-medium">{formatDuration(formData.durationSeconds)}</span>
-          </p>
-        )}
-
-        <div className="flex gap-3 mt-6">
-          <Button variant="secondary" onClick={onClose} className="flex-1">
-            Cancel
-          </Button>
-          <Button variant="primary" icon={<Save size={16} />} onClick={() => onSave(formData)} className="flex-1">
-            Confirm &amp; Save
-          </Button>
+        {/* Fixed Footer */}
+        <div className="p-5 border-t border-[var(--color-outline-variant)]/50 bg-[var(--color-surface)] shrink-0 rounded-b-2xl">
+          {Number(formData.durationSeconds) > 0 && (
+            <p className="text-body-sm text-[var(--color-on-surface-variant)] mb-4">
+              Duration preview: <span className="text-[var(--color-primary)] font-medium">{formatDuration(Number(formData.durationSeconds))}</span>
+            </p>
+          )}
+          <div className="flex gap-3">
+            <Button variant="secondary" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button variant="primary" icon={<Save size={16} />} onClick={() => {
+              const dataToSave = {
+                ...formData,
+                calories: parseFloat(formData.calories as string) || 0,
+                avgHR: parseFloat(formData.avgHR as string) || 0,
+                durationSeconds: parseFloat(formData.durationSeconds as string) || 0,
+                mets: parseFloat(formData.mets as string) || 0,
+              };
+              onSave(dataToSave);
+            }} className="flex-1">
+              Confirm &amp; Save
+            </Button>
+          </div>
         </div>
       </div>
     </div>
