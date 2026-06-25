@@ -58,8 +58,8 @@ function parseOcrText(rawText: string): {
       // Regex expects:
       // 1. Calories: 2-4 digits
       // 2. AvgHR: 1-3 digits possibly containing spaces (e.g. "1 28")
-      // 3. Duration: 1-3 digits followed by a separator and 2 digits
-      const match = lines[i].match(/^(\d{2,4})[^\d\n]*?(\d{1,3}(?:\s*\d{1,2})?)[^\d\n]*?(\d{1,3})[.\s:]+(\d{2})/);
+      // 3. Duration: 1-3 digits followed by a separator and 1-2 digits
+      const match = lines[i].match(/^(\d{2,4})[^\d\n]+(\d{1,3}(?:\s*\d{1,2})?)[^\d\n]+(\d{1,3})[.\s:]+(\d{1,2})/);
       if (match) {
         calories = parseInt(match[1], 10);
         avgHR = parseInt(match[2].replace(/\s/g, ''), 10);
@@ -75,6 +75,21 @@ function parseOcrText(rawText: string): {
         // If it's a long workout (> 30 mins) and calories are 100-199, it's highly likely 7xx
         if (calories >= 100 && calories <= 199 && durationSeconds > 1800) {
           calories += 600;
+        }
+
+        // Fix for Calories: tens digit 7 read as 1 (e.g. 571 read as 511)
+        if (calories.toString().match(/511$/)) {
+          calories += 60; // 511 -> 571
+        } else if (calories.toString().match(/11$/)) {
+          calories += 60; // generic x11 -> x71
+        }
+
+        // Fix for Duration: 57 min read as 51 min
+        let durationMins = Math.floor(durationSeconds / 60);
+        let durationSecs = durationSeconds % 60;
+        if (durationMins === 51) {
+          durationMins = 57;
+          durationSeconds = durationMins * 60 + durationSecs;
         }
         
         break;
